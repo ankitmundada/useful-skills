@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cli-atlassian"
+version = "0.1.0"
+description = "Open-source CLI for Jira and Confluence. Built for humans and AI agents."
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Ankit Mundada", email = "ankit.mundada@gmail.com"},
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "typer>=0.9.0",
+    "httpx>=0.24.0",
+    "rich>=13.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.0.292",
+]
+
+[project.urls]
+Homepage = "https://github.com/ankitmundada/useful-skills/tree/main/atlassian-cli"
+Repository = "https://github.com/ankitmundada/useful-skills"
+Issues = "https://github.com/ankitmundada/useful-skills/issues"
+
+[project.scripts]
+atlassian-cli = "atlassian_cli.app:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
