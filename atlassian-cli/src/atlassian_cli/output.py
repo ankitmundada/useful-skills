@@ -96,6 +96,12 @@ def _render_csv(rows: Sequence[dict[str, Any]], columns: list[str]) -> None:
     print(buf.getvalue(), end="")
 
 
+def html_to_markdown(html: str) -> str:
+    """Convert HTML to Markdown using markdownify."""
+    from markdownify import markdownify
+    return markdownify(html, heading_style="ATX").strip()
+
+
 def _truncate(s: str, max_len: int) -> str:
     if len(s) <= max_len:
         return s

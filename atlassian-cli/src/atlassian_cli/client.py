@@ -86,7 +86,21 @@ def confluence_delete(client: httpx.Client, path: str) -> Any:
     return _request(client, "DELETE", f"/wiki/api/v2/{path}")
 
 
-# Confluence v1 search (CQL) — v2 doesn't have a search endpoint
+# ── Confluence REST API v1 helpers (wiki format, search) ────────────────
+
+
+def confluence_v1_get(client: httpx.Client, path: str, **params: Any) -> Any:
+    return _request(client, "GET", f"/wiki/rest/api/{path}", params=params)
+
+
+def confluence_v1_post(client: httpx.Client, path: str, json: Any = None) -> Any:
+    return _request(client, "POST", f"/wiki/rest/api/{path}", json=json)
+
+
+def confluence_v1_put(client: httpx.Client, path: str, json: Any = None) -> Any:
+    return _request(client, "PUT", f"/wiki/rest/api/{path}", json=json)
+
+
 def confluence_search(client: httpx.Client, **params: Any) -> Any:
     return _request(client, "GET", "/wiki/rest/api/search", params=params)
 

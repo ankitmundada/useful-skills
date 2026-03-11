@@ -29,6 +29,7 @@ dependencies = [
     "typer>=0.9.0",
     "httpx>=0.24.0",
     "rich>=13.0.0",
+    "markdownify>=0.14.0",
 ]
 
 [project.optional-dependencies]

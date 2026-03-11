@@ -7,7 +7,7 @@ description: "Interact with Jira and Confluence using the open-source atlassian-
 
 Use the open-source `atlassian-cli` tool for all Jira and Confluence operations. It talks directly to Atlassian Cloud REST APIs and produces compact, predictable output well suited for AI agent workflows.
 
-**Install:** `pip install atlassian-cli` (or `pipx install atlassian-cli`).
+**Install:** `pip install cli-atlassian` (or `pipx install cli-atlassian` or `brew install ankitmundada/tap/atlassian-cli`).
 
 **Setup:** `atlassian-cli auth login` — prompts for site URL, email, and API token. Create a token at https://id.atlassian.com/manage/api-tokens.
 
@@ -217,13 +217,28 @@ See [advanced-jql-reference.md](references/advanced-jql-reference.md) for date f
 ```bash
 atlassian-cli confluence page view <PAGE-ID>
 atlassian-cli confluence page view <PAGE-ID> --body-format storage --output json
-atlassian-cli confluence page create --space <SPACE-ID> --title "Title" --body "<p>Content</p>"
-atlassian-cli confluence page create --space <SPACE-ID> --title "Title" --body-file page.html
-atlassian-cli confluence page edit <PAGE-ID> --title "New Title" --body "<p>Updated</p>"
+atlassian-cli confluence page create --space <SPACE-ID> --title "Title" --body "h1. Title\n\nContent here."
+atlassian-cli confluence page create --space <SPACE-ID> --title "Title" --body-file page.wiki
+atlassian-cli confluence page edit <PAGE-ID> --title "New Title" --body "h1. Updated\n\nNew content."
 atlassian-cli confluence page search --cql "space = 'ENG' AND title = 'Design Doc'" --limit 10
 ```
 
-`--body-format`: `storage` (XHTML), `atlas_doc_format` (ADF JSON), `view` (rendered).
+**Body format for writing (`--format`):** `wiki` (default), `storage` (XHTML), `atlas_doc_format` (ADF JSON). Wiki is compact and preferred for LLM-generated content.
+
+**Body format for reading (`--body-format`):** `markdown` (default — fetches rendered HTML and converts to clean Markdown), `storage` (raw XHTML), `view` (rendered HTML), `atlas_doc_format` (ADF JSON — very verbose, avoid).
+
+**Wiki markup quick reference:**
+```
+h1. Heading 1    h2. Heading 2
+*bold*   _italic_   +underline+   -strikethrough-
+[link text|https://example.com]
+* bullet item    # numbered item
+||Col1||Col2||   |cell1|cell2|
+{code:language=python}
+code here
+{code}
+{note}important{note}   {warning}dangerous{warning}   {tip}helpful{tip}
+```
 
 ### Space
 
@@ -241,11 +256,11 @@ atlassian-cli confluence space create --key NEWSPACE --name "Space Name" --descr
 ```bash
 atlassian-cli confluence blog list --space <SPACE-ID> --title "Release" --limit 10
 atlassian-cli confluence blog view <BLOG-ID> --output json
-atlassian-cli confluence blog create --space <SPACE-ID> --title "Title" --body "<p>Content</p>"
-atlassian-cli confluence blog create --space <SPACE-ID> --title "Draft" --status draft --body-file blog.html
+atlassian-cli confluence blog create --space <SPACE-ID> --title "Title" --body "h1. Title\n\nContent here."
+atlassian-cli confluence blog create --space <SPACE-ID> --title "Draft" --status draft --body-file post.wiki
 ```
 
-`--status`: `current` (published), `draft`.
+`--status`: `current` (published), `draft`. `--format`: `wiki` (default), `storage`, `atlas_doc_format`.
 
 ---
 
@@ -365,8 +380,8 @@ atlassian-cli jira issue comment add PROJ-123 --body "Reassigned to new-owner fo
 # Gather shipped items
 atlassian-cli jira issue search --jql "project = PROJ AND fixVersion = 'v2.5' AND status = Done" --output json > shipped.json
 
-# Create a blog post (after formatting the content)
-atlassian-cli confluence blog create --space <SPACE-ID> --title "Release Notes — v2.5" --body-file release-notes.html
+# Create a blog post in wiki format (default)
+atlassian-cli confluence blog create --space <SPACE-ID> --title "Release Notes — v2.5" --body-file release-notes.wiki
 ```
 
 ---

@@ -8,8 +8,13 @@ from typing import Optional
 
 import typer
 
-from atlassian_cli.client import get_client, confluence_get, confluence_post
-from atlassian_cli.output import render, render_single, render_message
+from atlassian_cli.client import (
+    get_client,
+    confluence_get,
+    confluence_post,
+    confluence_v1_post,
+)
+from atlassian_cli.output import render, render_single, render_message, html_to_markdown
 
 app = typer.Typer(help="Blog post commands.")
 
@@ -47,20 +52,27 @@ def list_blogs(
 @app.command("view")
 def view_blog(
     id: str = typer.Argument(help="Blog post ID"),
-    body_format: str = typer.Option("storage", "--body-format", help="storage, atlas_doc_format, or view"),
+    body_format: str = typer.Option("markdown", "--body-format", help="markdown (default), storage, atlas_doc_format, or view"),
     output: str = typer.Option("table", "--output", "-o"),
     profile: Optional[str] = typer.Option(None, "--profile", "-p"),
 ) -> None:
     """View a blog post by ID."""
     client = get_client(profile)
-    post = confluence_get(client, f"blogposts/{id}", **{"body-format": body_format})
+
+    # For markdown output, fetch the rendered HTML view and convert
+    api_format = "view" if body_format == "markdown" else body_format
+    post = confluence_get(client, f"blogposts/{id}", **{"body-format": api_format})
+
     if output == "json":
         print(json.dumps(post, indent=2))
         return
+
     body_content = ""
     body = post.get("body", {})
-    if body_format in body:
-        body_content = body[body_format].get("value", "")
+    if api_format in body:
+        raw = body[api_format].get("value", "")
+        body_content = html_to_markdown(raw) if body_format == "markdown" else raw
+
     detail = {
         "ID": post.get("id", ""),
         "Title": post.get("title", ""),
@@ -76,8 +88,9 @@ def view_blog(
 def create_blog(
     space_id: str = typer.Option(..., "--space", "-s", help="Space ID"),
     title: str = typer.Option(..., "--title", "-t", help="Blog post title"),
-    body: Optional[str] = typer.Option(None, "--body", "-b", help="Body (HTML/storage format)"),
+    body: Optional[str] = typer.Option(None, "--body", "-b", help="Blog post body content"),
     body_file: Optional[Path] = typer.Option(None, "--body-file", help="Read body from file"),
+    format: str = typer.Option("wiki", "--format", "-f", help="Body format: wiki (default), storage, or atlas_doc_format"),
     status: str = typer.Option("current", "--status", help="current or draft"),
     output: str = typer.Option("table", "--output", "-o"),
     profile: Optional[str] = typer.Option(None, "--profile", "-p"),
@@ -88,15 +101,31 @@ def create_blog(
     if body_file:
         content = body_file.read_text()
 
-    payload: dict = {
-        "spaceId": space_id,
-        "title": title,
-        "status": status,
-        "body": {
-            "representation": "storage",
-            "value": content,
-        },
-    }
+    if format == "wiki":
+        # v1 API properly converts wiki markup to storage format
+        payload: dict = {
+            "type": "blogpost",
+            "title": title,
+            "space": {"id": space_id},
+            "status": status,
+            "body": {
+                "wiki": {
+                    "value": content,
+                    "representation": "wiki",
+                },
+            },
+        }
+        result = confluence_v1_post(client, "content", json=payload)
+    else:
+        payload = {
+            "spaceId": space_id,
+            "title": title,
+            "status": status,
+            "body": {
+                "representation": format,
+                "value": content,
+            },
+        }
+        result = confluence_post(client, "blogposts", json=payload)
 
-    result = confluence_post(client, "blogposts", json=payload)
     render_message(f"[green]Created blog post '{title}' (id: {result.get('id')})[/green]")
